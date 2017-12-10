@@ -79,14 +79,14 @@ int cdStrcmp(const char *s1, const char *s2){
 }
 
 __global__
-void ckCountWord(char *src, char *cmp, int *count) {
+void ckCountWord(char *src, unsigned int srcLineAmount, char *cmp, int *count) {
 	// get next line from sfp
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     int lineIdx = tid * LINE_MAXLEN;
     int i;
     char *srcWord, *cmpWord;
     
-	for (i = 0; i < SRC_LINES; i++) {
+	for (i = 0; i < srcLineAmount; i++) {
         srcWord = &src[i * LINE_MAXLEN];
         cmpWord = &cmp[lineIdx];
         //int isMatch = 1;
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
         
         cudaMemcpy(D_srcSec, H_srcSec, srcSecSize, cudaMemcpyHostToDevice);
 				
-        ckCountWord<<<CMP_LINES/BLOCK_SIZE,BLOCK_SIZE>>>(D_srcSec, D_cmpSec, D_count);
+        ckCountWord<<<CMP_LINES/BLOCK_SIZE,BLOCK_SIZE>>>(D_srcSec, j, D_cmpSec, D_count);
 
         cudaDeviceSynchronize();
 
