@@ -6,10 +6,10 @@
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 
-#define SRC_LINES 10000
-#define CMP_LINES 1000
-#define LINE_MAXLEN 13000
-#define BLOCK_SIZE 1000
+#define SRC_LINES 10000 // 40
+#define CMP_LINES 1000 // 4
+#define LINE_MAXLEN 13000 // 100
+#define BLOCK_SIZE 1000 // 4
 
 
 /* Print error message and exit with error status. If PERR is not 0,
@@ -64,11 +64,18 @@ unsigned int getLineAmount(FILE *fp)
         if (c == '\n') // Increment count if this character is newline
             line = line + 1;
     }
-    line += 1;
 
     rewind(fp);
 
     return line;
+}
+
+__device__
+int cdStrcmp(const char *s1, const char *s2){
+    for ( ; *s1 == *s2; s1++, s2++)
+	    if (*s1 == '\0')
+	        return 0;
+    return ((*(unsigned char *)s1 < *(unsigned char *)s2) ? -1 : +1);
 }
 
 __global__
@@ -82,7 +89,8 @@ void ckCountWord(char *src, char *cmp, int *count) {
 	for (i = 0; i < SRC_LINES; i++) {
         srcWord = &src[i * LINE_MAXLEN];
         cmpWord = &cmp[lineIdx];
-        int isMatch = 1;
+        //int isMatch = 1;
+        /*
         while(!(*cmpWord == '\0' && *srcWord == '\0')){
             if(*srcWord != *cmpWord){
                 if(*srcWord == '\0' || *cmpWord == '\0')
@@ -93,7 +101,8 @@ void ckCountWord(char *src, char *cmp, int *count) {
             srcWord++;
             cmpWord++;
         }
-		if(isMatch) count[tid] += 1;
+        */
+		if(cdStrcmp(srcWord, cmpWord) == 0) count[tid] += 1;
         
 	}
 	// is it matched
@@ -141,6 +150,8 @@ int main(int argc, char **argv)
 
     int numSrcSec = getLineAmount(sfp) / SRC_LINES + 1;
 
+    //printf("%d sections.\n", numSrcSec);
+
 	for(i = 0; i < numSrcSec; i++){
 		for(j = 0; j < SRC_LINES; j++){
 			if(fgets(&H_srcSec[j * LINE_MAXLEN], LINE_MAXLEN, sfp) == NULL) break;
@@ -156,7 +167,7 @@ int main(int argc, char **argv)
 
     }
 
-    cudaMemcpy(D_count, H_count, CMP_LINES, cudaMemcpyDeviceToHost);
+    cudaMemcpy(H_count, D_count, CMP_LINES, cudaMemcpyDeviceToHost);
     
     cudaFree(D_srcSec);
     cudaFree(D_cmpSec);
