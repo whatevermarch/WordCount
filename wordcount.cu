@@ -80,8 +80,8 @@ void ckCountWord(char *src, char *cmp, int *count) {
     char *srcWord, *cmpWord;
     
 	for (i = 0; i < SRC_LINES; i++) {
-        srcWord = src[i * LINE_MAXLEN];
-        cmpWord = cmp[lineIdx];
+        srcWord = &src[i * LINE_MAXLEN];
+        cmpWord = &cmp[lineIdx];
         int isMatch = 1;
         while(!(*cmpWord == '\0' && *srcWord == '\0')){
             if(*srcWord != *cmpWord){
@@ -103,7 +103,7 @@ void ckCountWord(char *src, char *cmp, int *count) {
 int main(int argc, char **argv)
 {
     if (argc < 3)
-        err("Please fill the input file and comparer");
+        errf("Please fill the input file and comparer");
     
     FILE *sfp = fopen (argv[1], "r");
     FILE *cfp = fopen (argv[2], "r");
@@ -132,8 +132,7 @@ int main(int argc, char **argv)
 	// main task
 
 	for(i = 0; i < CMP_LINES; i++){
-        total_count[i] = 0;
-		if(fgets(H_cmpSec[i * LINE_MAXLEN], LINE_MAXLEN, cfp) == NULL) break;
+		if(fgets(&H_cmpSec[i * LINE_MAXLEN], LINE_MAXLEN, cfp) == NULL) break;
     }
     
     cudaMemcpy(D_cmpSec, H_cmpSec, cmpSecSize, cudaMemcpyHostToDevice);
@@ -144,7 +143,7 @@ int main(int argc, char **argv)
 
 	for(i = 0; i < numSrcSec; i++){
 		for(j = 0; j < SRC_LINES; j++){
-			if(fgets(H_srcSec[j * LINE_MAXLEN], LINE_MAXLEN, sfp) == NULL) break;
+			if(fgets(&H_srcSec[j * LINE_MAXLEN], LINE_MAXLEN, sfp) == NULL) break;
         }
         
         cudaMemcpy(D_srcSec, H_srcSec, srcSecSize, cudaMemcpyHostToDevice);
